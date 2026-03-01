@@ -15,8 +15,9 @@ import 'package:smb_app/main.dart';
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
+    WidgetsFlutterBinding.ensureInitialized(); // Required before any async
     await dotenv.load();
-    
+
     await tester.pumpWidget(MyApp(service: SmbService(
     host: dotenv.env['HOST_IP']!, 
     share: dotenv.env['SHARED_FOLDER']!, 
