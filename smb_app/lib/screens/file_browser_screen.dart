@@ -57,7 +57,18 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
   // Given the current state(context), it returns the corresponding UI (widget) === Rendering UI with new 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(    // Contains basic structure of AppBar(like Navbar) and Body
+
+  // PopScope has been used to handle the back button press
+  return PopScope(
+    canPop: _currentPath == "/",  // allow exit only when truly at root (optional: always block)
+    onPopInvokedWithResult: (didPop, _) {
+      if (!didPop && _currentPath != "/") {
+        // navigate up instead
+        final parent = _currentPath.substring(0, _currentPath.lastIndexOf("/", _currentPath.length - 2) + 1);  // to remove last folder on clicking back button, i.e. goes 1 folder above
+        _loadPath(parent.isEmpty ? "/" : parent);
+      }
+    },
+    child: Scaffold(    // Contains basic structure of AppBar(like Navbar) and Body
       appBar: AppBar(
         title: Text(_currentPath),  // first shown is current folder
         leading: _currentPath != "/" ? IconButton(    // Shows back button only if not root folder
@@ -83,10 +94,23 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
 
           // State 2: an error occurred
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Error: ${snapshot.error}'),
+                  ElevatedButton(
+                    onPressed: () => setState(() {
+                      _items = _initAndLoad();
+                    }),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
           }
 
-          // --- State 3: data arrived ---
+          // --- State 3: data correctly loaded ---
           final items = snapshot.data!; // '!' for non-nulll asssertion, i.e. a null vatiable is converted to it's equivalent non-null
 
           if (items.isEmpty) {
@@ -111,12 +135,12 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
                             : "$_currentPath${item.name}/";
                         _loadPath(newPath);
                       }
-                    : () { /* open file — Phase 4 */ },
+                    : () { /* TODO: open and download files */ },
               );
             },
           );
         },
       ),
-    );
-  }
+    ),
+  );}
 }
