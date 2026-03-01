@@ -8,17 +8,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smb_app/services/smb_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:smb_app/main.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
+    await dotenv.load();
+    
     await tester.pumpWidget(MyApp(service: SmbService(
-    host: "192.168.29.149", 
-    share: "cst_iiests", 
-    username: "smbuser", 
-    password: "2023",
+    host: dotenv.env['HOST_IP']!, 
+    share: dotenv.env['SHARED_FOLDER']!, 
+    username: dotenv.env['SMB_USER']!, 
+    password: dotenv.env['SMB_PASS']!,
   )));
 
     // Verify that our counter starts at 0.
