@@ -37,6 +37,7 @@ dependencies:
   smb_connect: ^0.0.9  # For SMB protocol
   path_provider: ^2.1.0 # Finds local Android storage paths
   open_filex: ^4.4.0    # Triggers native file viewers
+  flutter_dotenv: ^5.0.2 # For environment variable management
 
 dev_dependencies:
   flutter_test:

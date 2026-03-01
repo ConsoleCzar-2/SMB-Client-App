@@ -30,7 +30,7 @@ class SmbService {
   }
 
   // Func for listing all shared folder on host
-  Future<List<SmbItem>> listShared() async {
+  Future<List<SmbItem>> listShares() async {
     try{
       final shares = await connection.listShares(); // lists shared folders
       
@@ -43,6 +43,11 @@ class SmbService {
       throw Exception("SMB Error: ${e.toString()}");
     }
     
+  }
+
+  // Closing the SMB session
+  Future<void> disconnect() async {
+    await connection.close();
   }
 
 
