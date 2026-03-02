@@ -1,9 +1,13 @@
-import 'package:smb_app/models/smb_item.dart';
-import 'package:smb_connect/smb_connect.dart';
 // For SMB protocol calls and file handling
 
+import 'package:flutter/foundation.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:smb_app/models/smb_item.dart';
+import 'package:smb_connect/smb_connect.dart';
 
-// SMB operationos controller class
+
+// SMB operations controller class
 class SmbService {
   final String host;      // IP of host
   final String share;     // Shared folder
@@ -19,6 +23,8 @@ class SmbService {
     required this.password,    
   });
 
+
+
   // Initializing SMB session, init() must be called on SmbService object before use
   Future<void> init() async {
     connection = await SmbConnect.connectAuth(
@@ -27,6 +33,16 @@ class SmbService {
       password: password, 
       domain: "",
     );
+  }
+
+  // Closing the SMB session
+  Future<void> disconnect() async {
+    try{
+      await connection.close();
+    }
+    catch (e) {
+      debugPrint("Error closing SMB conn: ${e.toString()}");
+    }
   }
 
   // Func for listing all shared folder on host
@@ -43,11 +59,6 @@ class SmbService {
       throw Exception("SMB Error: ${e.toString()}");
     }
     
-  }
-
-  // Closing the SMB session
-  Future<void> disconnect() async {
-    await connection.close();
   }
 
 
@@ -69,6 +80,29 @@ class SmbService {
     }
     catch (e) {
       throw Exception("SMB Error: ${e.toString()}");
+    }
+  }
+
+  // Func for downloading the file at a temporary location and returning that path
+  Future<String> downloadFile(String path, String fname) async {
+    try {
+      final file = await connection.file(path);
+      final bytes = await connection.openRead(file);
+
+      // TODO: using temporary dir, might be specified by user later
+      final directory = await getTemporaryDirectory();
+      final localFile = File('${directory.path}/$fname');
+      final writeFd = localFile.openWrite();
+      await for (final chunk in bytes) {
+          writeFd.add(chunk);
+      }
+      await writeFd.flush();
+      await writeFd.close();
+
+      return localFile.path;
+  }
+    catch (e) {
+      throw Exception("Download error: ${e.toString()}");
     }
   }
 

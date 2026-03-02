@@ -1,7 +1,10 @@
+// For the App UI and navigation
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/smb_item.dart';
 import '../services/smb_service.dart';
-// For the App UI and navigation
+import 'package:open_filex/open_filex.dart';
 
 // Caller class for file browsing screen
 // Uses Stateful as the file list will update with each click
@@ -35,6 +38,14 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
     _items = _initAndLoad();
   }
 
+  // Closing session when work is done (Descructor)
+  @override
+  void dispose() {
+    _service.disconnect();
+    super.dispose();
+  }
+
+  // Helper func for initializing session and loading folder/file data
   Future<List<SmbItem>> _initAndLoad() async {
     await _service.init();
     if (_currentPath == "/") {
@@ -45,11 +56,15 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
     }
   }
 
-  // Closing session when work is done (Descructor)
-  @override
-  void dispose() {
-    _service.disconnect();
-    super.dispose();
+  // Hepler func for getting the parent path, useful for naviating up
+  String getParentPath(String path) {
+  final parts = path.split('/')..removeWhere((e) => e.isEmpty);
+
+  if (parts.isNotEmpty) {
+    parts.removeLast();
+  }
+
+  return parts.isEmpty ? "/" : "/${parts.join('/')}/";
   }
 
   // Navigation func
@@ -75,7 +90,52 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
     }
   }
 
+  // Opens the file which is clicked
+  // It first downloads the file at a temp location allocated by the OS and opens it from there
+  Future<void> _openFile(String path, String fname) async {
+    // Loading screen as file's being downloaded
+    showDialog(
+      context: context, // where to show logo
+      barrierDismissible: false,  // prevents user from closing dialog by clicking outside
+      builder: (builderContext) => const AlertDialog( // Opens the dialog box
+        content: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 20),
+            Text("Downloading..."), // TODO: add progress %age
+          ],
+        ),
+      ),
+    );
 
+    try {
+      final localPath = await _service.downloadFile(path, fname);
+      if (mounted) {
+        Navigator.of(context).pop(); // to close dialog after download finished
+      }
+      // TODO: use variuos methods to open different file types
+      await OpenFilex.open(localPath);  // opens downloaded file
+    }
+    catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop();  // closes dialog when error
+        // Snackbar is the popup notification at bottom of the screen
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: ${e.toString()}"),
+          ),
+        );
+      }
+      else {
+        // Widget not mounted, so we can just print error msg
+        debugPrint("Error: ${e.toString()}");
+      }
+    }
+  }
+
+
+  // Main UI Function
   // Given the current state(context), it returns the corresponding UI (widget) === Rendering UI with new 
   @override
   Widget build(BuildContext context) {
@@ -86,8 +146,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop && _currentPath != "/") {
           // navigate up instead
-          final parent = _currentPath.substring(0, _currentPath.lastIndexOf("/", _currentPath.length - 2) + 1);  // to remove last folder on clicking back button, i.e. goes 1 folder above
-          _loadPath(parent.isEmpty ? "/" : parent);
+          _loadPath(getParentPath(_currentPath));
         }
       },
       child: Scaffold(    // Contains basic structure of AppBar(like Navbar) and Body
@@ -96,8 +155,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
           leading: _currentPath != "/" ? IconButton(    // Shows back button only if not root folder
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
-              final parent = _currentPath.substring(0, _currentPath.lastIndexOf("/", _currentPath.length - 2) + 1);  // to remove last folder on clicking back button, i.e. goes 1 folder above
-              _loadPath(parent.isEmpty ? "/" : parent); // returns to root if parent is empty
+              _loadPath(getParentPath(_currentPath));
             },
           )
           : null,
@@ -120,7 +178,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Error: ${snapshot.error}'),
+                    Text('${snapshot.error}'),
                     ElevatedButton(
                       onPressed: () => setState(() {
                         _items = _initAndLoad();
@@ -155,7 +213,11 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
                           final newPath = buildPath(_currentPath, item.name);
                           _loadPath(newPath);
                         }
-                      : () { /* TODO: open and download files */ },
+                      : () { /* TODO: download files specifying download path */ 
+
+                          final filePath = buildPath(_currentPath, item.name).replaceAll(RegExp(r"/$"), "");  // removes trailing "/" for files
+                          _openFile(filePath, item.name);
+                      },
                 );
               },
             );
