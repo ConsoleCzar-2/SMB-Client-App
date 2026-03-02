@@ -31,7 +31,6 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /smb_app/build/
-/smb_app/test/
 
 # Symbolication related
 app.*.symbols
@@ -58,3 +57,5 @@ smb_app/android/key.properties
 # Environment variables
 .env
 .env.local
+
+todo.txt

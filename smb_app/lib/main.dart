@@ -5,7 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   // TODO: Contains hardcoded SMB connection details for now, would be user input later on
-  WidgetsFlutterBinding.ensureInitialized(); // Required before any async
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load();
   
   final smbService = SmbService(
