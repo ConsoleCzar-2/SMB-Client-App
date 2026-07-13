@@ -30,7 +30,7 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/smb_app/build/
+/build/
 
 # Symbolication related
 app.*.symbols
@@ -39,19 +39,19 @@ app.*.symbols
 app.*.map.json
 
 # Android Studio will place build artifacts here
-/smb_app/android/app/debug
-/smb_app/android/app/profile
-/smb_app/android/app/release
+/android/app/debug
+/android/app/profile
+/android/app/release
 
 # Android local config
-smb_app/android/local.properties
+android/local.properties
 # Gradle cache
-smb_app/android/.gradle/
+android/.gradle/
 
 # Signing keystores and key config (if used)
 *.keystore
 *.jks
-smb_app/android/key.properties
+android/key.properties
 
 
 # Environment variables
