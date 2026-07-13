@@ -1,33 +1,69 @@
 import 'package:flutter/material.dart';
-import 'package:smb_app/services/smb_service.dart';
-import 'package:smb_app/screens/file_browser_screen.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'screens/login_screen.dart';
+import 'services/theme_service.dart';
 
-void main() async {
-  // TODO: Contains hardcoded SMB connection details for now, would be user input later on
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load();
-  
-  final smbService = SmbService(
-    host: dotenv.env['HOST_IP']!, 
-    share: dotenv.env['SHARED_FOLDER']!, 
-    username: dotenv.env['SMB_USER']!, 
-    password: dotenv.env['SMB_PASS']!,
-  );
-
-  runApp(MyApp(service: smbService));
+  runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  final SmbService service;
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
 
-  const MyApp({super.key, required this.service});
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.light;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThemeMode();
+  }
+
+  Future<void> _loadThemeMode() async {
+    final isDarkMode = await ThemeService.loadDarkMode();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _themeMode = isDarkMode ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+  Future<void> _setDarkMode(bool isDarkMode) async {
+    await ThemeService.saveDarkMode(isDarkMode);
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _themeMode = isDarkMode ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "SMB Client App",
-      home: FileBrowserScreen(service: service),
+      title: 'SMB Client App',
+      themeMode: _themeMode,
+      theme: ThemeData(
+        colorSchemeSeed: Colors.indigo,
+        brightness: Brightness.light,
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        colorSchemeSeed: Colors.indigo,
+        brightness: Brightness.dark,
+        useMaterial3: true,
+      ),
+      home: LoginScreen(
+        isDarkMode: _themeMode == ThemeMode.dark,
+        onThemeChanged: _setDarkMode,
+      ),
     );
   }
 }
