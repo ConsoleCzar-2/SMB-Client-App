@@ -7,8 +7,6 @@ A Flutter Android app for browsing and downloading files from SMB/CIFS network s
 - **SMB authentication** — host, share, username, password with optional credential saving
 - **File browser** — navigate shares and folders, tap files to download and open
 - **Multi-select download** — long-press to select multiple files/folders, download as a single ZIP
-- **Dark/light mode** — manual toggle with system-aware default, persisted across launches
-- **Drawer menu** — shows connection details, theme switch, and logout (clears saved credentials)
 
 ## Build
 
